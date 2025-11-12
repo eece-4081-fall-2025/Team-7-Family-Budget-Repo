@@ -1,10 +1,10 @@
 {% extends "budget/base.html" %}
-{% block title %}Update Profile{% endblock %}
+{% block title %}Join Family Group{% endblock %}
 {% block content %}
-<h1>Update Profile</h1>
+<h1>Join Family Group</h1>
 <form method="post">
   {% csrf_token %}
   {{ form.as_p }}
-  <button type="submit">Save</button>
+  <button type="submit">Join</button>
 </form>
 {% endblock %}

@@ -19,7 +19,7 @@ class TestAuth(TestCase):
         url = reverse("login")
         resp = self.client.post(url, {"username": "drake", "password": "testpass123"})
         self.assertEqual(resp.status_code, 302)
-        self.assertEqual(resp.url, "/")
+        self.assertEqual(resp.url, "/dashboard/")
 
     def test_logout_and_protected_view_requires_login(self):
         self.client.login(username="drake", password="testpass123")

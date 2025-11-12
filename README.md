@@ -66,7 +66,9 @@ venv\Scripts\activate
 pip install -r requirements.txt  
 ### Run migrations
 py manage.py makemigrations 
+
 select this option 2) Ignore for now. Existing rows that contain NULL values will have to be handled manually, for example with a RunPython or RunSQL operation.
+
 py manage.py migrate
 
 

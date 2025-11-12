@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Family Budgeting Tool{% endblock %}</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 0;
+    }
+    nav {
+      background-color: #343a40;
+      padding: 10px;
+    }
+    nav a, nav button {
+      color: white;
+      margin-right: 15px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    nav button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font: inherit;
+    }
+    nav a:hover, nav button:hover {
+      text-decoration: underline;
+    }
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    {% if not user.is_authenticated %}
+      <a href="{% url 'budget_home' %}">Home</a>
+      <a href="{% url 'budget_signup' %}">Create Account</a>
+      <a href="{% url 'login' %}">Log In</a>
+    {% else %}
+      <a href="{% url 'budget_dashboard' %}">Dashboard</a>
+      <form method="post" action="{% url 'logout' %}" style="display:inline">
+        {% csrf_token %}
+        <button type="submit">Log Out</button>
+      </form>
+    {% endif %}
+  </nav>
+
+  <div class="container">
+    {% block content %}
+    {% endblock %}
+  </div>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{% extends "budget/base.html" %}
+{% block title %}Join Family Group{% endblock %}
+{% block content %}
+<div style="max-width: 600px; margin: 40px auto;">
+  <h1>Join Family Group</h1>
+  <form method="post">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div style="color:#b00020; margin-bottom:10px;">{{ form.non_field_errors }}</div>
+    {% endif %}
+    {{ form.as_p }}
+    <button type="submit">Join</button>
+  </form>
+</div>
+{% endblock %}

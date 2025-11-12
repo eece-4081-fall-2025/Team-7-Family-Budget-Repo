@@ -18,6 +18,16 @@ class FamilyGroup(models.Model):
     def __str__(self):
         return self.name
 
+    def members_qs(self):
+        return (
+            User.objects.filter(profile__group=self)
+            .select_related("profile")
+            .order_by("username")
+        )
+
+    def role_of(self, user):
+        return "Admin" if self.owner_id == getattr(user, "id", None) else "Member"
+
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True)

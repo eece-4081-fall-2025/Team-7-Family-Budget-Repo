@@ -6,9 +6,7 @@
     <form method="post">
       {% csrf_token %}
       {{ form.as_p }}
-      {% if next %}
-      <input type="hidden" name="next" value="{{ next }}">
-      {% endif %}
+      {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
       <button type="submit">Log in</button>
     </form>
     <p><a href="{% url 'budget_signup' %}">Create account</a></p>

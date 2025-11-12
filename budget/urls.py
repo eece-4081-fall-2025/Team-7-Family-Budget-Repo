@@ -1,9 +1,9 @@
 from django.urls import path
-from .views import SignupView, home, dashboard, ProfileEditView
+from .views import HomeView, DashboardView, SignupView, ProfileEditView
 
 urlpatterns = [
-    path("", home, name="budget_home"),
+    path("", HomeView.as_view(), name="budget_home"),
+    path("dashboard/", DashboardView.as_view(), name="budget_dashboard"),
     path("signup/", SignupView.as_view(), name="budget_signup"),
-    path("dashboard/", dashboard, name="budget_dashboard"),
     path("profile/edit/", ProfileEditView.as_view(), name="profile_edit"),
 ]

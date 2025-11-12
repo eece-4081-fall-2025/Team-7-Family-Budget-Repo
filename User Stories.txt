@@ -1,0 +1,50 @@
+User Registration & Profiles
+
+1. As a new user, I want to create an account so I can log in to the app.
+2. As a user, I want to log in and log out so my information stays private.
+3. As a user, I want to edit my profile so I can update income or expenses.
+4. As a user, I want to join a family group so I can share a budget with others.
+5. As a user, I want to view all members in my family group so I can see who’s included.
+
+Admin & Roles
+
+6. As an admin, I want to add or remove family members so I can manage our household budget.
+7. As an admin, I want to set spending categories so our budget is organized.
+8. As an admin, I want to set budget limits for each category so we stay on track.
+9. As an admin, I want to assign permissions (e.g., view only or edit) so everyone has the right access.
+10. As an admin, I want to create shared goals like “Save for vacation” so everyone can see our target.
+
+Budget Creation & Tracking
+
+11. As a user, I want to create a monthly budget by category so I can plan my spending.
+12. As a user, I want to record an expense so I can track how I spend money.
+13. As a user, I want to see how much I’ve spent so far this month so I can adjust if needed.
+14. As a user, I want to edit or delete an expense if I made a mistake.
+15. As a user, I want to choose how often to review my budget (daily, weekly, monthly).
+
+Historical View
+
+16. As a user, I want to see a summary of past months so I can find spending trends.
+17. As a user, I want to compare this month’s expenses to last month’s to see changes.
+18. As a user, I want to see which category went up or down (e.g., utilities down 10%) so I can adjust.
+19. As a user, I want to download my past budget data so I can keep records.
+20. As a user, I want to view graphs of my spending history to make it easy to understand.
+
+Projected View
+
+21. As a user, I want the app to estimate my next month’s budget based on past data.
+22. As a user, I want to try “what-if” scenarios (like increasing savings by 5%) to plan better.
+23. As a user, I want to see how fast I’ll reach my goal if I keep saving at this rate.
+24. As a user, I want to see future expenses based on recurring bills so I can prepare early.
+
+Actual vs. Budget Comparison
+
+25. As a user, I want to see budgeted vs. actual spending side-by-side for each category.
+26. As a user, I want to see green or red indicators showing if I’m over or under budget.
+27. As a user, I want to view a simple bar chart showing my spending progress.
+
+Reporting & Notifications
+
+28. As a user, I want a monthly report of income, expenses, and savings so I can review results.
+29. As a user, I want the report to include budget vs. actual and goals so it’s easy to see performance.
+30. As a user, I want to get an email or in-app alert when I go over my budget.

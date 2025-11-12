@@ -7,6 +7,7 @@ from django.shortcuts import redirect
 from .forms import ProfileForm
 from .forms_group import GroupJoinForm, GroupCreateForm
 from .models import Profile, FamilyGroup
+from . import services
 
 User = get_user_model()
 
@@ -31,46 +32,35 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy("budget_dashboard")
 
     def get_object(self):
-        obj, _ = Profile.objects.get_or_create(user=self.request.user)
-        return obj
+        return services.get_profile(self.request.user)
 
 
-class ProfileContextMixin(LoginRequiredMixin):
-    _profile = None
-
-    def get_profile(self):
-        if self._profile is None:
-            self._profile, _ = Profile.objects.get_or_create(user=self.request.user)
-        return self._profile
-
-
-class GroupJoinView(ProfileContextMixin, FormView):
+class GroupJoinView(LoginRequiredMixin, FormView):
     template_name = "budget/group_join.html"
     form_class = GroupJoinForm
     success_url = reverse_lazy("group_members")
 
     def form_valid(self, form):
-        profile = self.get_profile()
-        if profile.group_id:
+        profile = services.get_profile(self.request.user)
+        if not services.can_join_or_create_group(profile):
             form.add_error(
                 None,
                 "You are already in a family group. Leave it before joining another.",
             )
             return self.form_invalid(form)
         group = FamilyGroup.objects.get(code=form.cleaned_data["code"])
-        profile.group = group
-        profile.save()
+        services.attach_profile_to_group(profile, group)
         return super().form_valid(form)
 
 
-class GroupCreateView(ProfileContextMixin, CreateView):
+class GroupCreateView(LoginRequiredMixin, CreateView):
     template_name = "budget/group_create.html"
     form_class = GroupCreateForm
     success_url = reverse_lazy("group_members")
 
     def form_valid(self, form):
-        profile = self.get_profile()
-        if profile.group_id:
+        profile = services.get_profile(self.request.user)
+        if not services.can_join_or_create_group(profile):
             form.add_error(
                 None,
                 "You are already in a family group. Leave it before creating another.",
@@ -79,29 +69,19 @@ class GroupCreateView(ProfileContextMixin, CreateView):
         group = form.save(commit=False)
         group.owner = self.request.user
         group.save()
-        profile.group = group
-        profile.save()
+        services.attach_profile_to_group(profile, group)
         return super().form_valid(form)
 
 
-class GroupMembersView(ProfileContextMixin, TemplateView):
+class GroupMembersView(LoginRequiredMixin, TemplateView):
     template_name = "budget/group_members.html"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        profile = self.get_profile()
+        profile = services.get_profile(self.request.user)
         group = profile.group
-        if group:
-            users = group.members_qs()
-            members = [
-                {
-                    "username": u.username,
-                    "role": group.role_of(u),
-                    "income": getattr(u.profile, "income", 0),
-                    "expenses": getattr(u.profile, "expenses", 0),
-                }
-                for u in users
-            ]
+        if group is not None:
+            members = services.build_members_list(group)
         else:
             members = []
         ctx["group"] = group
@@ -109,11 +89,10 @@ class GroupMembersView(ProfileContextMixin, TemplateView):
         return ctx
 
 
-class GroupLeaveView(ProfileContextMixin, View):
+class GroupLeaveView(LoginRequiredMixin, View):
     success_url = reverse_lazy("group_members")
 
     def post(self, request, *args, **kwargs):
-        profile = self.get_profile()
-        profile.group = None
-        profile.save()
+        profile = services.get_profile(request.user)
+        services.detach_profile_from_group(profile)
         return redirect(self.success_url)

@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
+from django.conf import settings
 
 User = get_user_model()
 
@@ -19,7 +20,7 @@ class TestAuth(TestCase):
         url = reverse("login")
         resp = self.client.post(url, {"username": "drake", "password": "testpass123"})
         self.assertEqual(resp.status_code, 302)
-        self.assertEqual(resp.url, "/dashboard/")
+        self.assertEqual(resp.url, settings.LOGIN_REDIRECT_URL)
 
     def test_logout_and_protected_view_requires_login(self):
         self.client.login(username="drake", password="testpass123")

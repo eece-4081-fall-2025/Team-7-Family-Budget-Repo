@@ -1,5 +1,8 @@
 from decimal import Decimal
+from django.contrib.auth import get_user_model
 from .models import Profile, FamilyGroup
+
+User = get_user_model()
 
 
 def get_profile(user):
@@ -16,12 +19,29 @@ def attach_profile_to_group(profile, group):
     profile.save(update_fields=["group"])
 
 
+def remove_profile_from_group(profile):
+    profile.group = None
+    profile.save(update_fields=["group"])
+
+
+def add_user_to_group_by_username(username, group):
+    try:
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        return None
+    profile = get_profile(user)
+    if can_join_or_create_group(profile):
+        attach_profile_to_group(profile, group)
+    return profile
+
+
 def member_dto(profile, group):
     user = profile.user
     income = profile.income if profile.income is not None else Decimal("0")
     expenses = profile.expenses if profile.expenses is not None else Decimal("0")
     display_name = profile.nickname or user.username
     return {
+        "profile_id": profile.pk,
         "username": user.username,
         "display_name": display_name,
         "role": group.role_of(user),

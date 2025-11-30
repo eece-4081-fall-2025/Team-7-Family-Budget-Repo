@@ -1,72 +1,70 @@
 {% extends "budget/base.html" %}
-{% load humanize %}
 
 {% block title %}Family Members{% endblock %}
 
 {% block content %}
-<style>
-  .members-wrapper {
-    margin-top: 20px;
-  }
-  .member-card {
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    padding: 16px 20px;
-    margin-bottom: 14px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .member-main {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .member-name {
-    font-weight: 700;
-  }
-  .member-username {
-    color: #777;
-  }
-  .member-role {
-    padding: 4px 10px;
-    border-radius: 999px;
-    font-size: 0.8rem;
-    background-color: #f1eefc;
-    border: 1px solid #d3c9ff;
-  }
-  .member-money {
-    display: flex;
-    flex-direction: column;
-    text-align: right;
-    gap: 4px;
-    font-weight: 500;
-  }
-</style>
+<div class="card">
+  <h2>Family Group</h2>
 
-<h1>Family Members</h1>
+  {% if group %}
+    <p><strong>Group name:</strong> {{ group.name }}</p>
+    <p><strong>Invite code:</strong> {{ group.code }}</p>
+
+    {% if is_owner %}
+      <p><strong>Your role:</strong> Owner (Admin)</p>
+      <p>
+        <a href="{% url 'group_manage_members' %}" class="btn">
+          Manage family members
+        </a>
+      </p>
+    {% else %}
+      <p><strong>Your role:</strong> Member</p>
+    {% endif %}
+  {% else %}
+    <p>You are not currently in a family group.</p>
+    <p>
+      <a href="{% url 'group_create' %}">Create a family group</a> or
+      <a href="{% url 'group_join' %}">join with a code</a>.
+    </p>
+  {% endif %}
+</div>
 
 {% if group %}
-  <p><strong>Group:</strong> {{ group.name }} (Code: {{ group.code }})</p>
+  <h3>Members</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Name / Nickname</th>
+        <th>Username</th>
+        <th>Role</th>
+        <th>Income</th>
+        <th>Expenses</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for member in members %}
+        <tr>
+          <td>{{ member.display_name }}</td>
+          <td>{{ member.username }}</td>
+          <td>{{ member.role }}</td>
+          <td>{{ member.income }}</td>
+          <td>{{ member.expenses }}</td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="5">No members in this group yet.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 
-  <div class="members-wrapper">
-    {% for member in members %}
-      <div class="member-card">
-        <div class="member-main">
-          <span class="member-name">{{ member.display_name }}</span>
-          <span class="member-username">({{ member.username }})</span>
-          <span class="member-role">{{ member.role }}</span>
-        </div>
-        <div class="member-money">
-          <span>Income: ${{ member.income|floatformat:0|intcomma }}</span>
-          <span>Expenses: ${{ member.expenses|floatformat:0|intcomma }}</span>
-        </div>
-      </div>
-    {% empty %}
-      <p>No members in this group yet.</p>
-    {% endfor %}
-  </div>
-{% else %}
-  <p>You are not in a family group yet.</p>
+  <form method="post" action="{% url 'group_leave' %}" style="margin-top: 20px;">
+    {% csrf_token %}
+    <button type="submit">Leave family group</button>
+  </form>
 {% endif %}
+
+<p style="margin-top: 20px;">
+  <a href="{% url 'budget_dashboard' %}">Back to Dashboard</a>
+</p>
 {% endblock %}

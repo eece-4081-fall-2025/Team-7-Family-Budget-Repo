@@ -1,0 +1,14 @@
+{% extends "budget/base.html" %}
+
+{% block title %}Confirm Logout{% endblock %}
+
+{% block content %}
+  <h2>Confirm Logout</h2>
+  <p>Are you sure you want to log out?</p>
+
+  <form method="post" action="{% url 'logout' %}">
+    {% csrf_token %}
+    <button type="submit">Yes, log me out</button>
+    <a href="{% url 'budget_dashboard' %}">Cancel</a>
+  </form>
+{% endblock %}

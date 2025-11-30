@@ -1,39 +1,26 @@
 from django.db import models
-from django.contrib.auth import get_user_model
-
-User = get_user_model()
-
+from django.contrib.auth.models import User
 
 class FamilyGroup(models.Model):
-    name = models.CharField(max_length=100)
-    code = models.CharField(max_length=32, unique=True)
-    owner = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="owned_groups"
-    )
+    name = models.CharField(max_length=255)
+    code = models.CharField(max_length=12, unique=True)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="owned_groups")
+
+    def members_qs(self):
+        return Profile.objects.filter(group=self)
+
+    def role_of(self, user):
+        return "Admin" if self.owner_id == user.id else "Member"
 
     def __str__(self):
         return self.name
 
-    def members_qs(self):
-        return (
-            User.objects.filter(profile__group=self)
-            .select_related("profile")
-            .order_by("username")
-        )
-
-    def role_of(self, user):
-        if self.owner_id == getattr(user, "id", None):
-            return "Admin"
-        return "Member"
-
-
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    income = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    expenses = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    group = models.ForeignKey(
-        FamilyGroup, null=True, blank=True, on_delete=models.SET_NULL
-    )
+    income = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    expenses = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    group = models.ForeignKey(FamilyGroup, on_delete=models.SET_NULL, null=True, blank=True)
+    nickname = models.CharField(max_length=50, blank=True, default="")  # <-- NEW
 
     def __str__(self):
-        return f"Profile({self.user.username})"
+        return self.nickname or self.user.username

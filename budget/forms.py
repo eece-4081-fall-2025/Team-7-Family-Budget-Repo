@@ -1,17 +1,17 @@
 from django import forms
 from .models import Profile
 
+
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ["nickname", "income", "expenses"]  # <-- include nickname
-        widgets = {
-            "nickname": forms.TextInput(attrs={"placeholder": "Optional nickname"}),
-            "income": forms.NumberInput(attrs={"step": "0.01", "min": "0"}),
-            "expenses": forms.NumberInput(attrs={"step": "0.01", "min": "0"}),
-        }
+        fields = ["nickname", "income", "expenses"]
         labels = {
             "nickname": "Nickname",
             "income": "Monthly Income",
             "expenses": "Monthly Expenses",
         }
+
+
+class JoinGroupForm(forms.Form):
+    code = forms.CharField(label="Family Code", max_length=10)

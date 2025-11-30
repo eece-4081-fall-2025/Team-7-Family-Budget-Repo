@@ -1,10 +1,105 @@
-{% extends "budget/base.html" %}
-{% block title %}Update Profile{% endblock %}
-{% block content %}
-<h1>Update Profile</h1>
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Save</button>
-</form>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Update Profile</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 0;
+    }
+    nav {
+      background-color: #343a40;
+      padding: 10px;
+    }
+    nav a, nav button {
+      color: white;
+      margin-right: 15px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    nav button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font: inherit;
+    }
+    nav a:hover, nav button:hover {
+      text-decoration: underline;
+    }
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+    .card {
+      padding: 20px;
+    }
+    .card h2 {
+      margin-top: 0;
+      margin-bottom: 20px;
+    }
+    .form-row {
+      margin-bottom: 15px;
+      display: flex;
+      flex-direction: column;
+    }
+    .form-row label {
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .form-row input {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button[type="submit"] {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    a.cancel-link {
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/dashboard/">Dashboard</a>
+    <a href="/accounts/logout/confirm/">Log Out</a>
+  </nav>
+
+  <div class="container">
+    <div class="card">
+      <h2>Update Profile</h2>
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-row">
+          <label for="id_nickname">Nickname</label>
+          {{ form.nickname }}
+          {{ form.nickname.errors }}
+        </div>
+        <div class="form-row">
+          <label for="id_income">Monthly Income</label>
+          {{ form.income }}
+          {{ form.income.errors }}
+        </div>
+        <div class="form-row">
+          <label for="id_expenses">Monthly Expenses</label>
+          {{ form.expenses }}
+          {{ form.expenses.errors }}
+        </div>
+        <button type="submit">Update Profile</button>
+        <a href="/dashboard/" class="cancel-link">Cancel</a>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

@@ -8,6 +8,12 @@ from .forms import ProfileForm
 from .forms_group import GroupJoinForm, GroupCreateForm
 from .models import Profile, FamilyGroup
 from . import services
+from django.contrib.auth import logout
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import render, redirect
+from django.views import View
+from django.views.generic import TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 User = get_user_model()
 
@@ -96,3 +102,22 @@ class GroupLeaveView(LoginRequiredMixin, View):
         profile = services.get_profile(request.user)
         services.detach_profile_from_group(profile)
         return redirect(self.success_url)
+
+class ConfirmLogoutView(LoginRequiredMixin, View):
+    template_name = "registration/logout_confirm.html"
+
+    def get(self, request):
+        return render(request, self.template_name)
+
+    def post(self, request):
+        logout(request)
+        return redirect("/")
+
+class LogoutConfirmView(LoginRequiredMixin, TemplateView):
+    template_name = "registration/logout_confirm.html"
+
+    def post(self, request, *args, **kwargs):
+        if "confirm" in request.POST:
+            logout(request)
+            return redirect("budget_home")
+        return redirect("budget_dashboard")

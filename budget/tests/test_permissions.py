@@ -1,4 +1,5 @@
 
+
 from decimal import Decimal
 
 from django.test import TestCase
@@ -33,7 +34,6 @@ class TestPermissions(TestCase):
         self.member_profile.group = self.group
         self.member_profile.save()
 
-        
         self.manage_members_url = reverse("group_manage_members")
         self.category_manage_url = reverse("category_manage")
         self.goal_manage_url = reverse("goal_manage")
@@ -41,6 +41,7 @@ class TestPermissions(TestCase):
     def test_owner_can_promote_member_to_admin(self):
       
         self.client.force_login(self.owner)
+
         self.assertFalse(
             getattr(self.member_profile, "is_admin", False),
             "Member should not be admin before promotion.",
@@ -61,7 +62,7 @@ class TestPermissions(TestCase):
         )
 
     def test_owner_can_demote_admin_to_member(self):
-      
+        
         setattr(self.member_profile, "is_admin", True)
         self.member_profile.save()
 
@@ -81,7 +82,7 @@ class TestPermissions(TestCase):
         )
 
     def test_non_owner_cannot_change_permissions(self):
-       
+        
         self.client.force_login(self.member)
 
         resp = self.client.post(
@@ -90,7 +91,7 @@ class TestPermissions(TestCase):
             follow=True,
         )
 
-
+        
         self.member_profile.refresh_from_db()
         self.assertFalse(
             getattr(self.member_profile, "is_admin", False),
@@ -98,7 +99,7 @@ class TestPermissions(TestCase):
         )
 
     def test_admin_can_manage_categories(self):
-
+       
         setattr(self.member_profile, "is_admin", True)
         self.member_profile.group = self.group
         self.member_profile.save()
@@ -116,7 +117,7 @@ class TestPermissions(TestCase):
         self.client.force_login(self.member)
         resp = self.client.get(self.category_manage_url)
 
-       
+        
         self.assertNotEqual(
             resp.status_code,
             200,
@@ -124,7 +125,7 @@ class TestPermissions(TestCase):
         )
 
     def test_admin_can_manage_goals(self):
-       
+        
         setattr(self.member_profile, "is_admin", True)
         self.member_profile.group = self.group
         self.member_profile.save()

@@ -77,7 +77,12 @@ class GroupJoinView(LoginRequiredMixin, FormView):
             return self.form_invalid(form)
 
         services.attach_profile_to_group(profile, group)
+        # joined members should start as non-admin (view-only)
+        profile.is_admin = False
+        profile.save()
+
         return super().form_valid(form)
+
 
 
 class GroupCreateView(LoginRequiredMixin, CreateView):
@@ -97,9 +102,13 @@ class GroupCreateView(LoginRequiredMixin, CreateView):
         form.instance.owner = self.request.user
         response = super().form_valid(form)
 
-        # Attach the creator to the group as a member
+        # Attach the creator to the group as a member (view-only by default)
         services.attach_profile_to_group(profile, self.object)
+        profile.is_admin = False
+        profile.save()
+
         return response
+
 
 
 class GroupMembersView(LoginRequiredMixin, TemplateView):
@@ -137,8 +146,10 @@ class GroupLeaveView(LoginRequiredMixin, View):
         profile = services.get_profile(request.user)
         if profile.group is not None:
             profile.group = None
+            profile.is_admin = False
             profile.save()
         return redirect("group_members")
+
 
 
 class ConfirmLogoutView(LoginRequiredMixin, View):
@@ -198,9 +209,11 @@ class AdminManageMembersView(LoginRequiredMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         """
-        Handles both:
+        Handles:
         - action == "add": add by username
         - action == "remove": remove member by profile id
+        - action == "promote": make member an admin
+        - action == "demote": remove admin rights
         """
         profile, group = self._get_profile_and_group(request.user)
 
@@ -223,6 +236,9 @@ class AdminManageMembersView(LoginRequiredMixin, TemplateView):
                 else:
                     profile_to_add = services.get_profile(user_to_add)
                     services.attach_profile_to_group(profile_to_add, group)
+                    # new members default to non-admin
+                    profile_to_add.is_admin = False
+                    profile_to_add.save()
 
         # REMOVE MEMBER BY PROFILE ID
         elif action == "remove":
@@ -234,9 +250,23 @@ class AdminManageMembersView(LoginRequiredMixin, TemplateView):
                 # Do not allow the owner to remove themselves here
                 if member_profile.user != request.user:
                     member_profile.group = None
+                    member_profile.is_admin = False
+                    member_profile.save()
+
+        # PROMOTE / DEMOTE ADMIN
+        elif action in {"promote", "demote"}:
+            member_profile_id = request.POST.get("member_profile_id")
+            if member_profile_id:
+                member_profile = get_object_or_404(
+                    Profile, pk=member_profile_id, group=group
+                )
+                # Can't change your own role or the owner record via this
+                if member_profile.user != request.user and member_profile.user != group.owner:
+                    member_profile.is_admin = (action == "promote")
                     member_profile.save()
 
         return redirect("group_manage_members")
+
 
 
 class AdminRemoveMemberView(LoginRequiredMixin, View):
@@ -267,13 +297,17 @@ class CategoryManageView(LoginRequiredMixin, TemplateView):
     template_name = "budget/category_manage.html"
 
     def dispatch(self, request, *args, **kwargs):
-        # Only allow the owner of the current group to manage categories
         profile = services.get_profile(request.user)
         group = profile.group
-        if not group or group.owner != request.user:
-            return HttpResponseForbidden("Only the group owner can manage categories.")
+        # allow owner OR admin to manage categories
+        if not group or (group.owner != request.user and not profile.is_admin):
+            return HttpResponseForbidden(
+                "Only the group owner or an admin can manage categories."
+            )
         self.group = group
+        self.profile = profile
         return super().dispatch(request, *args, **kwargs)
+
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -323,9 +357,13 @@ class GoalManageView(LoginRequiredMixin, TemplateView):
     def dispatch(self, request, *args, **kwargs):
         profile = services.get_profile(request.user)
         group = profile.group
-        if not group or group.owner != request.user:
-            return HttpResponseForbidden("Only the group owner can manage goals.")
+        # allow owner OR admin to manage goals
+        if not group or (group.owner != request.user and not profile.is_admin):
+            return HttpResponseForbidden(
+                "Only the group owner or an admin can manage goals."
+            )
         self.group = group
+        self.profile = profile
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):

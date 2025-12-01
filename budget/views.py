@@ -106,6 +106,7 @@ class GroupMembersView(LoginRequiredMixin, TemplateView):
         group = profile.group
 
         if group is not None:
+            # Returns dicts: profile_id, username, display_name, role, income, expenses
             members = services.build_members_list(group)
             # grab all spending categories for this group
             categories = Category.objects.filter(group=group).order_by("name")

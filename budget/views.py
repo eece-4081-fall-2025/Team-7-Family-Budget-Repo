@@ -121,6 +121,7 @@ class GroupJoinView(LoginRequiredMixin, FormView):
         return super().form_valid(form)
 
 
+
 class GroupCreateView(LoginRequiredMixin, CreateView):
     model = FamilyGroup
     fields = ["name"]
@@ -168,6 +169,7 @@ class GroupMembersView(LoginRequiredMixin, TemplateView):
         context["is_owner"] = bool(group and group.owner == self.request.user)
 
         return context
+
 
 
 class GroupLeaveView(LoginRequiredMixin, View):

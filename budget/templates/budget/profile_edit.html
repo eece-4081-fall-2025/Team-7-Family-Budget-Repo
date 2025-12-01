@@ -1,0 +1,28 @@
+{% extends "budget/base.html" %}
+
+{% block title %}Update Profile{% endblock %}
+
+{% block content %}
+<h1>Update Profile</h1>
+
+<form method="post">
+  {% csrf_token %}
+
+  <div>
+    <label for="id_nickname">Nickname</label>
+    {{ form.nickname }}
+  </div>
+
+  <div>
+    <label for="id_income">Monthly Income</label>
+    {{ form.income }}
+  </div>
+
+  <div>
+    <label for="id_expenses">Monthly Expenses</label>
+    {{ form.expenses }}
+  </div>
+
+  <button type="submit">Update Profile</button>
+</form>
+{% endblock %}

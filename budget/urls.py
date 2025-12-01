@@ -1,3 +1,5 @@
+# budget/urls.py
+
 from django.urls import path
 
 from .views import (
@@ -17,10 +19,13 @@ from .views import (
 )
 
 urlpatterns = [
+    # Home & dashboard
     path("", HomeView.as_view(), name="budget_home"),
     path("dashboard/", DashboardView.as_view(), name="budget_dashboard"),
 
     path("signup/", SignupView.as_view(), name="budget_signup"),
+
+    # Profile editing
     path("profile/edit/", ProfileEditView.as_view(), name="profile_edit"),
 
     path("group/join/", GroupJoinView.as_view(), name="group_join"),
@@ -36,3 +41,6 @@ urlpatterns = [
     path("categories/manage/", CategoryManageView.as_view(), name="category_manage"),
     path("goals/", GoalManageView.as_view(), name="goal_manage"),
 ]
+
+
+

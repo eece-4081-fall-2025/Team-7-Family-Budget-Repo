@@ -47,11 +47,8 @@
       <a href="{% url 'budget_signup' %}">Create Account</a>
       <a href="{% url 'login' %}">Log In</a>
     {% else %}
-      <a href="{% url 'budget_dashboard' %}">Dashboard</a>
-      <form method="post" action="{% url 'logout' %}" style="display:inline">
-        {% csrf_token %}
-        <button type="submit">Log Out</button>
-      </form>
+  <a href="{% url 'budget_dashboard' %}">Dashboard</a>
+  <a href="{% url 'budget_logout_confirm' %}">Log Out</a>
     {% endif %}
   </nav>
 

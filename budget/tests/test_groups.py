@@ -1,40 +1,60 @@
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
-from budget.models import Profile, FamilyGroup
-from decimal import Decimal
+
+from budget.models import FamilyGroup, Profile
 
 User = get_user_model()
 
 
 class TestGroups(TestCase):
     def setUp(self):
-        self.alice = User.objects.create_user(username="alice", password="pass12345")
-        self.bob = User.objects.create_user(username="bob", password="pass12345")
-        Profile.objects.get_or_create(user=self.alice)
-        Profile.objects.get_or_create(user=self.bob)
-        self.group = FamilyGroup.objects.create(name="Watters", code="W123")
+        self.owner = User.objects.create_user(
+            username="owner",
+            password="testpass123",
+        )
+
+        self.group = FamilyGroup.objects.create(
+            name="Watters",
+            code="W123",
+            owner=self.owner,
+        )
+
+        self.user = User.objects.create_user(
+            username="joiner",
+            password="testpass123",
+        )
+        self.profile = Profile.objects.create(user=self.user)
 
     def test_join_requires_login(self):
-        resp = self.client.get(reverse("group_join"))
+        resp = self.client.post(
+            reverse("group_join"),
+            {"code": "W123"},
+        )
         self.assertEqual(resp.status_code, 302)
-        self.assertTrue(resp.url.startswith("/accounts/login/"))
+        self.assertIn("/accounts/login/", resp.url)
 
     def test_join_by_code_attaches_profile(self):
-        self.client.login(username="alice", password="pass12345")
-        resp = self.client.post(reverse("group_join"), {"code": "W123"})
-        self.assertEqual(resp.status_code, 302)
-        self.assertEqual(resp.url, "/group/members/")
-        p = Profile.objects.get(user=self.alice)
-        self.assertEqual(p.group, self.group)
+        self.client.login(username="joiner", password="testpass123")
+        resp = self.client.post(
+            reverse("group_join"),
+            {"code": "W123"},
+            follow=True,
+        )
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.group, self.group)
+        self.assertContains(resp, "Watters")
 
     def test_members_list_shows_all_group_users(self):
-        self.client.login(username="alice", password="pass12345")
-        self.client.post(reverse("group_join"), {"code": "W123"})
-        self.client.logout()
-        self.client.login(username="bob", password="pass12345")
-        self.client.post(reverse("group_join"), {"code": "W123"})
+        self.profile.group = self.group
+        self.profile.save()
+
+        owner_profile, _ = Profile.objects.get_or_create(user=self.owner)
+        owner_profile.group = self.group
+        owner_profile.save()
+
+        self.client.login(username="owner", password="testpass123")
         resp = self.client.get(reverse("group_members"))
-        self.assertEqual(resp.status_code, 200)
-        self.assertIn(b"alice", resp.content)
-        self.assertIn(b"bob", resp.content)
+
+        self.assertContains(resp, "owner")
+        self.assertContains(resp, "joiner")

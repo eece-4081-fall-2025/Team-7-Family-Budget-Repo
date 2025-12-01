@@ -1,0 +1,58 @@
+{% extends "budget/base.html" %}
+
+{% block title %}Confirm Logout{% endblock %}
+
+{% block content %}
+<style>
+  .logout-box {
+    max-width: 420px;
+    margin: 60px auto;
+    padding: 30px;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    text-align: center;
+  }
+  .logout-box h2 {
+    margin-bottom: 15px;
+    font-size: 24px;
+    color: #333;
+  }
+  .logout-box p {
+    margin-bottom: 25px;
+    color: #555;
+  }
+  .logout-box button {
+    padding: 10px 20px;
+    background: #dc3545;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-right: 10px;
+  }
+  .logout-box button:hover {
+    background: #b02a37;
+  }
+  .logout-box a {
+    font-size: 16px;
+    color: #007bff;
+    text-decoration: none;
+  }
+  .logout-box a:hover {
+    text-decoration: underline;
+  }
+</style>
+
+<div class="logout-box">
+  <h2>Confirm Logout</h2>
+  <p>Are you sure you want to log out?</p>
+
+  <form method="post" action="{% url 'logout' %}">
+    {% csrf_token %}
+    <button type="submit">Yes, log me out</button>
+    <a href="{% url 'budget_dashboard' %}">Cancel</a>
+  </form>
+</div>
+{% endblock %}

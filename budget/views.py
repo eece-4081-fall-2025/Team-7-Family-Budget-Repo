@@ -1,22 +1,19 @@
-# budget/views.py
+
+from decimal import Decimal, InvalidOperation
 
 from django.contrib.auth import get_user_model, logout
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import HttpResponseForbidden
 from django.shortcuts import redirect, get_object_or_404, render
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import TemplateView, CreateView, UpdateView, FormView
 
-from decimal import Decimal
-
-from django.http import HttpResponseForbidden
-
-
+from . import services
 from .forms import ProfileForm
 from .forms_group import GroupJoinForm
 from .models import Profile, FamilyGroup, Category, Goal
-from . import services
 
 User = get_user_model()
 
@@ -29,14 +26,15 @@ class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = "budget/dashboard.html"
 
     def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         profile = services.get_profile(self.request.user)
         group = profile.group
-        ctx["profile"] = profile
-        ctx["group"] = group
-        # Owner is the User on the FamilyGroup
-        ctx["is_owner"] = bool(group and group.owner == self.request.user)
-        return ctx
+
+        context["profile"] = profile
+        context["group"] = group
+        context["is_owner"] = bool(group and group.owner == self.request.user)
+
+        return context
 
 
 class SignupView(CreateView):
@@ -52,6 +50,46 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
 
     def get_object(self, queryset=None):
         return services.get_profile(self.request.user)
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+
+        profile = self.object
+        group = profile.group
+        if not group:
+            return response
+
+        total_extra = Decimal("0")
+
+        for category in Category.objects.filter(group=group):
+            field_name = f"category_expense_{category.id}"
+            raw = self.request.POST.get(field_name, "").strip()
+            if not raw:
+                continue
+
+            try:
+                amount = Decimal(raw)
+            except InvalidOperation:
+                amount = None
+
+            if amount is not None and amount > 0:
+                total_extra += amount
+
+        if total_extra:
+            current = profile.expenses or Decimal("0")
+            profile.expenses = current + total_extra
+            profile.save(update_fields=["expenses"])
+
+        return response
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        profile = self.object
+        group = profile.group
+        context["categories"] = (
+            Category.objects.filter(group=group).order_by("name") if group else []
+        )
+        return context
 
 
 class GroupJoinView(LoginRequiredMixin, FormView):
@@ -77,7 +115,6 @@ class GroupJoinView(LoginRequiredMixin, FormView):
             return self.form_invalid(form)
 
         services.attach_profile_to_group(profile, group)
-        # joined members should start as non-admin (view-only)
         profile.is_admin = False
         profile.save()
 
@@ -98,11 +135,9 @@ class GroupCreateView(LoginRequiredMixin, CreateView):
             form.add_error(None, "You are already in a family group.")
             return self.form_invalid(form)
 
-        # Owner is the User
         form.instance.owner = self.request.user
         response = super().form_valid(form)
 
-        # Attach the creator to the group as a member (view-only by default)
         services.attach_profile_to_group(profile, self.object)
         profile.is_admin = False
         profile.save()
@@ -110,12 +145,11 @@ class GroupCreateView(LoginRequiredMixin, CreateView):
         return response
 
 
-
 class GroupMembersView(LoginRequiredMixin, TemplateView):
     template_name = "budget/group_members.html"
 
     def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         profile = services.get_profile(self.request.user)
         group = profile.group
 
@@ -128,20 +162,17 @@ class GroupMembersView(LoginRequiredMixin, TemplateView):
             categories = []
             goals = []
 
-        ctx["group"] = group
-        ctx["members"] = members
-        ctx["categories"] = categories
-        ctx["goals"] = goals
-        ctx["is_owner"] = bool(group and group.owner == self.request.user)
-        return ctx
+        context["group"] = group
+        context["members"] = members
+        context["categories"] = categories
+        context["goals"] = goals
+        context["is_owner"] = bool(group and group.owner == self.request.user)
+
+        return context
 
 
 
 class GroupLeaveView(LoginRequiredMixin, View):
-    """
-    Let the current user leave their family group.
-    """
-
     def post(self, request, *args, **kwargs):
         profile = services.get_profile(request.user)
         if profile.group is not None:
@@ -149,7 +180,6 @@ class GroupLeaveView(LoginRequiredMixin, View):
             profile.is_admin = False
             profile.save()
         return redirect("group_members")
-
 
 
 class ConfirmLogoutView(LoginRequiredMixin, View):
@@ -166,20 +196,9 @@ class ConfirmLogoutView(LoginRequiredMixin, View):
 
 
 class AdminManageMembersView(LoginRequiredMixin, TemplateView):
-    """
-    Owner-only page to add/remove members by username or profile id.
-    """
-
     template_name = "budget/admin_manage_members.html"
 
     def _get_profile_and_group(self, user):
-        """
-        Get the Profile for this user, and the FamilyGroup they belong to
-        or own.
-
-        - First check profile.group
-        - If that's None, fall back to any FamilyGroup where owner == user
-        """
         profile = services.get_profile(user)
         group = profile.group
 
@@ -189,41 +208,30 @@ class AdminManageMembersView(LoginRequiredMixin, TemplateView):
         return profile, group
 
     def dispatch(self, request, *args, **kwargs):
-        """
-        Redirect non-owners back to the members page.
-        """
         profile, group = self._get_profile_and_group(request.user)
         if not group or group.owner != request.user:
             return redirect("group_members")
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         profile, group = self._get_profile_and_group(self.request.user)
 
         members = services.build_members_list(group) if group else []
-        ctx["group"] = group
-        ctx["members"] = members
-        ctx["error"] = getattr(self, "_error", "")
-        return ctx
+        context["group"] = group
+        context["members"] = members
+        context["error"] = getattr(self, "_error", "")
+
+        return context
 
     def post(self, request, *args, **kwargs):
-        """
-        Handles:
-        - action == "add": add by username
-        - action == "remove": remove member by profile id
-        - action == "promote": make member an admin
-        - action == "demote": remove admin rights
-        """
         profile, group = self._get_profile_and_group(request.user)
 
-        # Only the owner of the group may make changes
         if not group or group.owner != request.user:
             return redirect("group_members")
 
         action = request.POST.get("action", "").strip()
 
-        # ADD MEMBER BY USERNAME
         if action == "add":
             username = request.POST.get("username", "").strip()
             if not username:
@@ -236,149 +244,129 @@ class AdminManageMembersView(LoginRequiredMixin, TemplateView):
                 else:
                     profile_to_add = services.get_profile(user_to_add)
                     services.attach_profile_to_group(profile_to_add, group)
-                    # new members default to non-admin
                     profile_to_add.is_admin = False
                     profile_to_add.save()
 
-        # REMOVE MEMBER BY PROFILE ID
         elif action == "remove":
             member_profile_id = request.POST.get("member_profile_id")
             if member_profile_id:
                 member_profile = get_object_or_404(
                     Profile, pk=member_profile_id, group=group
                 )
-                # Do not allow the owner to remove themselves here
                 if member_profile.user != request.user:
                     member_profile.group = None
                     member_profile.is_admin = False
                     member_profile.save()
 
-        # PROMOTE / DEMOTE ADMIN
         elif action in {"promote", "demote"}:
             member_profile_id = request.POST.get("member_profile_id")
             if member_profile_id:
                 member_profile = get_object_or_404(
                     Profile, pk=member_profile_id, group=group
                 )
-                # Can't change your own role or the owner record via this
-                if member_profile.user != request.user and member_profile.user != group.owner:
-                    member_profile.is_admin = (action == "promote")
+                if (
+                    member_profile.user != request.user
+                    and member_profile.user != group.owner
+                ):
+                    member_profile.is_admin = action == "promote"
                     member_profile.save()
 
         return redirect("group_manage_members")
 
 
-
 class AdminRemoveMemberView(LoginRequiredMixin, View):
-    """
-    Optional extra endpoint to remove a member via /group/remove-member/<profile_id>/.
-    Not required by the tests, but safe to keep.
-    """
-
     def post(self, request, profile_id, *args, **kwargs):
         current_profile, group = AdminManageMembersView()._get_profile_and_group(
             request.user
         )
 
-        # Only the owner can remove members
         if not group or group.owner != request.user:
             return redirect("group_members")
 
         member_profile = get_object_or_404(Profile, pk=profile_id, group=group)
 
-        # Do not allow the owner to remove themselves
         if member_profile.user != request.user:
             member_profile.group = None
             member_profile.save()
 
         return redirect("group_manage_members")
-    
+
+
 class CategoryManageView(LoginRequiredMixin, TemplateView):
     template_name = "budget/category_manage.html"
 
     def dispatch(self, request, *args, **kwargs):
         profile = services.get_profile(request.user)
         group = profile.group
-        # allow owner OR admin to manage categories
+
         if not group or (group.owner != request.user and not profile.is_admin):
             return HttpResponseForbidden(
                 "Only the group owner or an admin can manage categories."
             )
+
         self.group = group
         self.profile = profile
         return super().dispatch(request, *args, **kwargs)
 
-
     def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["group"] = self.group
-        ctx["categories"] = Category.objects.filter(
+        context = super().get_context_data(**kwargs)
+        context["group"] = self.group
+        context["categories"] = Category.objects.filter(
             group=self.group
         ).order_by("name")
-        return ctx
+        return context
 
     def post(self, request, *args, **kwargs):
-        # 1) Add a new category by name
         name = request.POST.get("name", "").strip()
         if name:
             Category.objects.get_or_create(group=self.group, name=name)
 
-        # 2) Update budget limit for a specific category
-        cat_id = request.POST.get("category_id", "").strip()
+        category_id = request.POST.get("category_id", "").strip()
         limit_raw = request.POST.get("limit", "").strip()
-        if cat_id and limit_raw:
+        if category_id and limit_raw:
             try:
-                category = Category.objects.get(id=cat_id, group=self.group)
+                category = Category.objects.get(id=category_id, group=self.group)
                 category.budget_limit = Decimal(limit_raw)
                 category.save()
-            except (Category.DoesNotExist, ValueError, Decimal.InvalidOperation):
-                # Silently ignore bad input; tests only care about valid path.
+            except (Category.DoesNotExist, ValueError, InvalidOperation):
                 pass
 
-        # 3) Optional: delete a category
         delete_id = request.POST.get("delete_category_id", "").strip()
         if delete_id:
             try:
-                to_delete = Category.objects.get(id=delete_id, group=self.group)
-                to_delete.delete()
+                category_to_delete = Category.objects.get(id=delete_id, group=self.group)
+                category_to_delete.delete()
             except Category.DoesNotExist:
                 pass
 
         return redirect("category_manage")
 
+
 class GoalManageView(LoginRequiredMixin, TemplateView):
-    """
-    For: 'As an admin I want to create shared goals like "Save for vacation"
-    so everyone can see our target.'
-    Only the group owner can manage goals.
-    """
     template_name = "budget/goals_manage.html"
 
     def dispatch(self, request, *args, **kwargs):
         profile = services.get_profile(request.user)
         group = profile.group
-        # allow owner OR admin to manage goals
+
         if not group or (group.owner != request.user and not profile.is_admin):
             return HttpResponseForbidden(
                 "Only the group owner or an admin can manage goals."
             )
+
         self.group = group
         self.profile = profile
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["group"] = self.group
-        ctx["goals"] = Goal.objects.filter(
+        context = super().get_context_data(**kwargs)
+        context["group"] = self.group
+        context["goals"] = Goal.objects.filter(
             group=self.group
         ).order_by("created_at")
-        return ctx
+        return context
 
     def post(self, request, *args, **kwargs):
-        """
-        - Default: create a goal (same behavior as before, so tests stay green)
-        - If action == "delete": delete the given goal for this group
-        """
         action = request.POST.get("action", "create")
 
         if action == "delete":
@@ -387,14 +375,13 @@ class GoalManageView(LoginRequiredMixin, TemplateView):
                 Goal.objects.filter(id=goal_id, group=self.group).delete()
             return redirect("goal_manage")
 
-        # CREATE behavior (unchanged from your working version)
         name = request.POST.get("name", "").strip()
         target_raw = request.POST.get("target_amount", "").strip()
 
         if name and target_raw:
             try:
                 target = Decimal(target_raw)
-            except Exception:
+            except InvalidOperation:
                 target = None
 
             if target is not None:

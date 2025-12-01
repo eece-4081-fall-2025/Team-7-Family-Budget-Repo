@@ -7,43 +7,54 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f8f9fa;
+      background-color: #f4f4f4;
       margin: 0;
       padding: 0;
     }
     nav {
       background-color: #343a40;
-      padding: 10px;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #fff;
     }
-    nav a, nav button {
-      color: white;
+    nav .nav-left a,
+    nav .nav-right a,
+    nav .nav-right button {
+      color: #fff;
       margin-right: 15px;
       text-decoration: none;
       font-weight: bold;
+      font-size: 14px;
     }
-    nav button {
+    nav .nav-right button {
       background: none;
       border: none;
       cursor: pointer;
       font: inherit;
+      padding: 0;
     }
-    nav a:hover, nav button:hover {
+    nav a:hover,
+    nav button:hover {
       text-decoration: underline;
     }
     .container {
       max-width: 800px;
       margin: 40px auto;
-      background: white;
-      padding: 20px;
+      background: #ffffff;
+      padding: 25px 30px;
       border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
     .card {
-      padding: 20px;
+      margin-bottom: 20px;
     }
     .card h2 {
       margin-top: 0;
       margin-bottom: 20px;
+      font-size: 24px;
+      color: #333;
     }
     .form-row {
       margin-bottom: 15px;
@@ -53,27 +64,90 @@
     .form-row label {
       margin-bottom: 5px;
       font-weight: bold;
+      font-size: 14px;
+      color: #444;
     }
-    .form-row input {
-      padding: 8px;
+    .form-row input,
+    .form-row select {
+      padding: 8px 10px;
       border: 1px solid #ccc;
       border-radius: 4px;
+      font-size: 14px;
     }
-    button[type="submit"] {
+    .form-row .errorlist {
+      margin-top: 4px;
+      color: #d9534f;
+      font-size: 13px;
+      list-style: none;
+      padding-left: 0;
+    }
+    .categories-section {
+      margin-top: 20px;
+      border-top: 1px solid #eee;
+      padding-top: 20px;
+    }
+    .categories-section h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+    .category-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+      gap: 10px;
+    }
+    .category-row label {
+      flex: 1;
+      font-weight: normal;
+      font-size: 14px;
+    }
+    .category-row input {
+      width: 140px;
+      padding: 6px 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .hint-text {
+      font-size: 0.9em;
+      color: #666;
+      margin-bottom: 10px;
+    }
+    .actions {
+      margin-top: 20px;
+    }
+    .btn-primary {
       padding: 10px 20px;
+      background-color: #007bff;
       border: none;
       border-radius: 4px;
+      color: #fff;
+      font-size: 14px;
       cursor: pointer;
     }
-    a.cancel-link {
+    .btn-primary:hover {
+      background-color: #0056b3;
+    }
+    .cancel-link {
       margin-left: 10px;
+      font-size: 14px;
+      color: #555;
+      text-decoration: none;
+    }
+    .cancel-link:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
   <nav>
-    <a href="/dashboard/">Dashboard</a>
-    <a href="/accounts/logout/confirm/">Log Out</a>
+    <div class="nav-left">
+      <a href="{% url 'budget_dashboard' %}">Dashboard</a>
+    </div>
+    <div class="nav-right">
+      <a href="{% url 'budget_logout_confirm' %}">Log Out</a>
+    </div>
   </nav>
 
   <div class="container">
@@ -81,25 +155,64 @@
       <h2>Update Profile</h2>
       <form method="post">
         {% csrf_token %}
+
         <div class="form-row">
           <label for="id_nickname">Nickname</label>
           {{ form.nickname }}
           {{ form.nickname.errors }}
         </div>
+
         <div class="form-row">
           <label for="id_income">Monthly Income</label>
           {{ form.income }}
           {{ form.income.errors }}
         </div>
+
         <div class="form-row">
           <label for="id_expenses">Monthly Expenses</label>
           {{ form.expenses }}
           {{ form.expenses.errors }}
         </div>
-        <button type="submit">Update Profile</button>
-        <a href="/dashboard/" class="cancel-link">Cancel</a>
+
+        <div class="categories-section">
+          <h3>Add Expenses by Category</h3>
+          <p class="hint-text">
+            Enter how much you want to add to this month’s expenses for each category.
+          </p>
+
+          {% if categories %}
+            {% for cat in categories %}
+              <div class="category-row">
+                <label for="id_category_expense_{{ cat.id }}">
+                  {{ cat.name }}
+                  {% if cat.budget_limit %}
+                    (Limit: ${{ cat.budget_limit }})
+                  {% endif %}
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  name="category_expense_{{ cat.id }}"
+                  id="id_category_expense_{{ cat.id }}"
+                  placeholder="0.00"
+                >
+              </div>
+            {% endfor %}
+          {% else %}
+            <p class="hint-text">
+              No categories have been created for your family group yet.
+            </p>
+          {% endif %}
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn-primary">Update Profile</button>
+          <a href="{% url 'budget_dashboard' %}" class="cancel-link">Cancel</a>
+        </div>
       </form>
     </div>
   </div>
 </body>
 </html>
+

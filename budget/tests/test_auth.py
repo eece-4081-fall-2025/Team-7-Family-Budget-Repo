@@ -14,7 +14,8 @@ class TestAuth(TestCase):
         url = reverse("login")
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200)
-        self.assertIn(b"Log in", resp.content)
+        self.assertIn(b"log in", resp.content.lower())
+
 
     def test_login_success_redirects_home(self):
         url = reverse("login")

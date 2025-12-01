@@ -29,6 +29,7 @@ def add_user_to_group_by_username(username, group):
         user = User.objects.get(username=username)
     except User.DoesNotExist:
         return None
+
     profile = get_profile(user)
     if can_join_or_create_group(profile):
         attach_profile_to_group(profile, group)
@@ -37,9 +38,10 @@ def add_user_to_group_by_username(username, group):
 
 def member_dto(profile, group):
     user = profile.user
-    income = profile.income if profile.income is not None else Decimal("0")
-    expenses = profile.expenses if profile.expenses is not None else Decimal("0")
+    income = profile.income or Decimal("0")
+    expenses = profile.expenses or Decimal("0")
     display_name = profile.nickname or user.username
+
     return {
         "profile_id": profile.pk,
         "username": user.username,
@@ -51,21 +53,9 @@ def member_dto(profile, group):
 
 
 def build_members_list(group):
-    profiles = Profile.objects.filter(group=group).select_related("user").order_by(
-        "user__username"
+    profiles = (
+        Profile.objects.filter(group=group)
+        .select_related("user")
+        .order_by("user__username")
     )
-    members = [member_dto(p, group) for p in profiles]
-
-    # Enrich with admin info and adjust role label if needed
-    for p, m in zip(profiles, members):
-        # expose is_admin for templates
-        m["is_admin"] = getattr(p, "is_admin", False)
-        # if the dto called them "Member" but they are admin, relabel
-        try:
-            if m.get("role") == "Member" and p.is_admin:
-                m["role"] = "Admin"
-        except Exception:
-            # if role isn't there for some reason, just skip
-            pass
-
-    return members
+    return [member_dto(p, group) for p in profiles]

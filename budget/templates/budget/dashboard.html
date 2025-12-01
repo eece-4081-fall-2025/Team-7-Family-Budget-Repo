@@ -1,17 +1,90 @@
 {% extends "budget/base.html" %}
+
 {% block title %}Dashboard{% endblock %}
+
 {% block content %}
-<h1>Dashboard</h1>
+<style>
+  .dashboard-container {
+    max-width: 850px;
+    margin: 40px auto;
+    padding: 30px;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  }
+  .dashboard-header h1 {
+    margin-top: 0;
+    font-size: 28px;
+    color: #333;
+  }
+  .welcome-text {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 25px;
+  }
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 16px;
+  }
+  .dash-card {
+    background: #f8f9fa;
+    padding: 18px;
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .dash-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+  }
+  .dash-card a {
+    text-decoration: none;
+    color: #007bff;
+    font-weight: bold;
+    font-size: 16px;
+  }
+  .dash-card a:hover {
+    text-decoration: underline;
+  }
+</style>
 
-<p>Welcome, {{ request.user.profile.nickname|default:request.user.username }}</p>
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h1>Dashboard</h1>
+    <p class="welcome-text">
+      Welcome, <strong>{{ request.user.profile.nickname|default:request.user.username }}</strong>
+    </p>
+  </div>
 
-<ul>
-  <li><a href="{% url 'profile_edit' %}">Edit Profile</a></li>
-  <li><a href="{% url 'group_create' %}">Create Family Group</a></li>
-  <li><a href="{% url 'group_join' %}">Join Family Group</a></li>
-  <li><a href="{% url 'group_members' %}">View Family Members</a></li>
-  <li><a href="{% url 'group_manage_members' %}">Manage Family Members</a></li>
-  <li><a href="{% url 'category_manage' %}">Manage Spending Categories</a></li>
-  <li><a href="{% url 'goal_manage' %}">Manage Savings Goals</a></li>
-</ul>
+  <div class="dashboard-grid">
+    <div class="dash-card">
+      <a href="{% url 'profile_edit' %}">Edit Profile</a>
+    </div>
+
+    <div class="dash-card">
+      <a href="{% url 'group_create' %}">Create Family Group</a>
+    </div>
+
+    <div class="dash-card">
+      <a href="{% url 'group_join' %}">Join Family Group</a>
+    </div>
+
+    <div class="dash-card">
+      <a href="{% url 'group_members' %}">View Family Members</a>
+    </div>
+
+    <div class="dash-card">
+      <a href="{% url 'group_manage_members' %}">Manage Family Members</a>
+    </div>
+
+    <div class="dash-card">
+      <a href="{% url 'category_manage' %}">Manage Spending Categories</a>
+    </div>
+
+    <div class="dash-card">
+      <a href="{% url 'goal_manage' %}">Manage Savings Goals</a>
+    </div>
+  </div>
+</div>
 {% endblock %}

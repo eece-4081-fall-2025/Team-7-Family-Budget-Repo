@@ -6,14 +6,11 @@ from django.urls import reverse
 
 from budget.models import Profile, FamilyGroup, Category, Goal
 
-
 User = get_user_model()
 
 
 class TestBudgetLimits(TestCase):
-
     def setUp(self):
-      
         self.owner = User.objects.create_user(
             username="owner", password="testpass123"
         )
@@ -24,7 +21,6 @@ class TestBudgetLimits(TestCase):
             expenses=Decimal("1000.00"),
         )
 
-      
         self.group = FamilyGroup.objects.create(
             name="Fam",
             code="F123",
@@ -34,18 +30,15 @@ class TestBudgetLimits(TestCase):
         self.owner_profile.group = self.group
         self.owner_profile.save()
 
-  
         self.category = Category.objects.create(
             group=self.group,
             name="Groceries",
         )
 
-    
         self.client.force_login(self.owner)
         self.manage_url = reverse("category_manage")
 
     def test_owner_can_set_budget_limit_for_category(self):
-       
         response = self.client.post(
             self.manage_url,
             {
@@ -55,16 +48,12 @@ class TestBudgetLimits(TestCase):
             follow=True,
         )
 
-        
         self.category.refresh_from_db()
         self.assertEqual(self.category.budget_limit, Decimal("500.00"))
 
 
 class TestGoals(TestCase):
-
-
     def setUp(self):
- 
         self.owner = User.objects.create_user(
             username="owner", password="testpass123"
         )
@@ -75,7 +64,6 @@ class TestGoals(TestCase):
             expenses=Decimal("1000.00"),
         )
 
-        
         self.other = User.objects.create_user(
             username="other", password="testpass123"
         )
@@ -86,7 +74,6 @@ class TestGoals(TestCase):
             expenses=Decimal("800.00"),
         )
 
-       
         self.group = FamilyGroup.objects.create(
             name="Fam",
             code="G123",
@@ -102,16 +89,14 @@ class TestGoals(TestCase):
         self.manage_url = reverse("goal_manage")
 
     def test_owner_can_view_goals_page(self):
-        """Group owner can see the shared goals management page."""
         self.client.force_login(self.owner)
         resp = self.client.get(self.manage_url)
         self.assertEqual(resp.status_code, 200)
         self.assertIn(b"Shared Goals", resp.content)
 
     def test_owner_can_create_goal(self):
-        """Owner can create a new shared goal with a target amount."""
         self.client.force_login(self.owner)
-        resp = self.client.post(
+        self.client.post(
             self.manage_url,
             {
                 "name": "Save for vacation",
@@ -119,7 +104,7 @@ class TestGoals(TestCase):
             },
             follow=True,
         )
-        
+
         self.assertTrue(
             Goal.objects.filter(
                 group=self.group,
@@ -129,8 +114,6 @@ class TestGoals(TestCase):
         )
 
     def test_non_owner_cannot_manage_goals(self):
-        """Non-owners cannot access the shared goals management page."""
         self.client.force_login(self.other)
         resp = self.client.get(self.manage_url)
-
         self.assertEqual(resp.status_code, 403)

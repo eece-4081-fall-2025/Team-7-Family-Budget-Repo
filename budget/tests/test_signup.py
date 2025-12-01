@@ -10,7 +10,8 @@ class TestSignup(TestCase):
         url = reverse("budget_signup")
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200)
-        self.assertIn(b"Create your account", resp.content)
+        self.assertIn(b"create your account", resp.content.lower())
+
 
     def test_signup_creates_user_and_redirects(self):
         url = reverse("budget_signup")

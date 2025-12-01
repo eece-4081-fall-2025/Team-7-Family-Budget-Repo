@@ -3,53 +3,167 @@
 {% block title %}Spending Categories{% endblock %}
 
 {% block content %}
-<h1>Spending Categories</h1>
+<style>
+  .categories-container {
+    max-width: 700px;
+    margin: 40px auto;
+    padding: 30px;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  }
+  .categories-header h1 {
+    margin: 0 0 10px;
+    font-size: 26px;
+    color: #333;
+  }
+  .categories-header p {
+    margin: 0 0 20px;
+    color: #555;
+  }
+  .category-list {
+    margin-bottom: 20px;
+  }
+  .category-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+  }
+  .category-main {
+    margin-bottom: 4px;
+  }
+  .category-name {
+    font-weight: bold;
+  }
+  .category-meta {
+    color: #555;
+    margin-left: 4px;
+  }
+  .category-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .category-actions form {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+  }
+  .category-actions input[type="text"] {
+    width: 110px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 13px;
+  }
+  .btn {
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .btn-primary {
+    background-color: #007bff;
+    color: #fff;
+  }
+  .btn-primary:hover {
+    background-color: #0056b3;
+  }
+  .btn-danger {
+    background-color: #dc3545;
+    color: #fff;
+  }
+  .btn-danger:hover {
+    background-color: #b02a37;
+  }
+  .empty-text {
+    color: #777;
+    font-size: 14px;
+  }
+  .new-category-form {
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+    margin-top: 20px;
+  }
+  .new-category-form label {
+    display: block;
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+  .new-category-form input[type="text"] {
+    width: 100%;
+    max-width: 300px;
+    padding: 8px 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+</style>
 
-{% if group %}
-  <p>Managing categories for: <strong>{{ group.name }}</strong></p>
-{% else %}
-  <p>You are not currently in a family group.</p>
-{% endif %}
+<div class="categories-container">
+  <div class="categories-header">
+    <h1>Spending Categories</h1>
 
-<div class="category-list">
-  {% if categories %}
-    {% for cat in categories %}
-      <div class="category-item" style="padding: 6px 0; border-bottom: 1px solid #eee;">
-        <strong>{{ cat.name }}</strong>
-        {% if cat.budget_limit %}
-          – Limit: ${{ cat.budget_limit }}
-        {% else %}
-          – No limit set
-        {% endif %}
+    {% if group %}
+      <p>Managing categories for: <strong>{{ group.name }}</strong></p>
+    {% else %}
+      <p>You are not currently in a family group.</p>
+    {% endif %}
+  </div>
 
-        <!-- Form to update budget limit -->
-        <form method="post" style="display:inline;">
-          {% csrf_token %}
-          <input type="hidden" name="category_id" value="{{ cat.id }}">
-          <input type="text" name="limit" placeholder="e.g. 500.00" style="width:100px;">
-          <button type="submit">Set Limit</button>
-        </form>
+  <div class="category-list">
+    {% if categories %}
+      {% for cat in categories %}
+        <div class="category-item">
+          <div class="category-main">
+            <span class="category-name">{{ cat.name }}</span>
+            {% if cat.budget_limit %}
+              <span class="category-meta">– Limit: ${{ cat.budget_limit }}</span>
+            {% else %}
+              <span class="category-meta">– No limit set</span>
+            {% endif %}
+          </div>
 
-        <!-- Form to delete this category -->
-        <form method="post" style="display:inline; margin-left: 8px;">
-          {% csrf_token %}
-          <input type="hidden" name="delete_category_id" value="{{ cat.id }}">
-          <button type="submit">Delete</button>
-        </form>
-      </div>
-    {% endfor %}
-  {% else %}
-    <p>No categories yet.</p>
-  {% endif %}
+          <div class="category-actions">
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="category_id" value="{{ cat.id }}">
+              <input
+                type="text"
+                name="limit"
+                placeholder="e.g. 500.00"
+              >
+              <button type="submit" class="btn btn-primary">Set Limit</button>
+            </form>
+
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="delete_category_id" value="{{ cat.id }}">
+              <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p class="empty-text">No categories yet.</p>
+    {% endif %}
+  </div>
+
+  <form method="post" class="new-category-form">
+    {% csrf_token %}
+    <label for="id_name">Add New Category</label>
+    <input
+      type="text"
+      id="id_name"
+      name="name"
+      placeholder="e.g. Groceries"
+    >
+    <button type="submit" class="btn btn-primary">Add Category</button>
+  </form>
 </div>
-
-<hr>
-
-<form method="post">
-  {% csrf_token %}
-  <label for="id_name"><strong>Add New Category</strong></label>
-  <input type="text" id="id_name" name="name" placeholder="e.g. Groceries" style="width:100%; max-width:300px;">
-  <button type="submit">Add Category</button>
-</form>
-
 {% endblock %}

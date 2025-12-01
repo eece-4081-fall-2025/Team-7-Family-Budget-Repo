@@ -1,4 +1,5 @@
 {% extends "budget/base.html" %}
+
 {% block title %}Family Members{% endblock %}
 
 {% block content %}
@@ -8,31 +9,74 @@
   <p>Family group: <strong>{{ group.name }}</strong></p>
 
   <h2>Members</h2>
-  <ul>
-    {% for m in members %}
-      <li>
-        {{ m.display_name }} ({{ m.role }})
-        – Income: {{ m.income }} | Expenses: {{ m.expenses }}
-      </li>
-    {% empty %}
-      <li>No members found.</li>
-    {% endfor %}
-  </ul>
+  {% if members %}
+    <table style="width:100%; border-collapse: collapse; margin-bottom: 20px;">
+      <thead>
+        <tr>
+          <th style="border-bottom:1px solid #ccc; text-align:left; padding:4px;">Name</th>
+          <th style="border-bottom:1px solid #ccc; text-align:left; padding:4px;">Role</th>
+          <th style="border-bottom:1px solid #ccc; text-align:left; padding:4px;">Income</th>
+          <th style="border-bottom:1px solid #ccc; text-align:left; padding:4px;">Expenses</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in members %}
+          <tr>
+            <td style="border-bottom:1px solid #eee; padding:4px;">{{ m.display_name }}</td>
+            <td style="border-bottom:1px solid #eee; padding:4px;">{{ m.role }}</td>
+            <td style="border-bottom:1px solid #eee; padding:4px;">${{ m.income }}</td>
+            <td style="border-bottom:1px solid #eee; padding:4px;">${{ m.expenses }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No members are in this family group yet.</p>
+  {% endif %}
 
   <h2>Spending Categories</h2>
   {% if categories %}
     <ul>
       {% for cat in categories %}
-        <li>{{ cat.name }}</li>
-      {% empty %}
-        <li>No categories have been created yet.</li>
+        <li>
+          {{ cat.name }}
+          {% if cat.budget_limit %}
+            – Limit: ${{ cat.budget_limit }}
+          {% else %}
+            – No limit set
+          {% endif %}
+        </li>
       {% endfor %}
     </ul>
   {% else %}
-    <p>No categories have been created yet.</p>
+    <p>No spending categories set yet.</p>
   {% endif %}
 
+  <h2>Shared Goals</h2>
+  {% if goals %}
+    <ul>
+      {% for goal in goals %}
+        <li>
+          {{ goal.name }} – Target: ${{ goal.target_amount }}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No shared goals set yet.</p>
+  {% endif %}
+
+  <p style="margin-top: 20px;">
+    {% if is_owner %}
+      <a href="{% url 'group_manage_members' %}">Manage family members</a> |
+      <a href="{% url 'category_manage' %}">Manage spending categories</a> |
+      <a href="{% url 'goal_manage' %}">Manage shared goals</a>
+    {% endif %}
+  </p>
 {% else %}
   <p>You are not currently in a family group.</p>
+  <p>
+    <a href="{% url 'group_create' %}">Create a family group</a> or
+    <a href="{% url 'group_join' %}">join a group</a>.
+  </p>
 {% endif %}
 {% endblock %}

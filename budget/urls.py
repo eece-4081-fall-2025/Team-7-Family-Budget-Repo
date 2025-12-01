@@ -15,6 +15,7 @@ from .views import (
     AdminManageMembersView,
     AdminRemoveMemberView,
     CategoryManageView,
+    GoalManageView,
 )
 
 urlpatterns = [
@@ -58,6 +59,9 @@ urlpatterns = [
         CategoryManageView.as_view(),
         name="category_manage",
     ),
+    path("goals/", 
+        GoalManageView.as_view(), 
+        name="goal_manage"),
 ]
 
 

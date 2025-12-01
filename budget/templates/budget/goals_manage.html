@@ -1,0 +1,51 @@
+{% extends "budget/base.html" %}
+
+{% block title %}Shared Goals{% endblock %}
+
+{% block content %}
+<h1>Shared Goals</h1>
+
+{% if group %}
+  <p>Managing goals for: <strong>{{ group.name }}</strong></p>
+{% else %}
+  <p>You are not currently in a family group.</p>
+{% endif %}
+
+<div class="goal-list">
+  {% if goals %}
+    {% for goal in goals %}
+      <div class="goal-item" style="padding: 6px 0; border-bottom: 1px solid #eee;">
+        <strong>{{ goal.name }}</strong>
+        – Target: ${{ goal.target_amount }}
+
+        <!-- Delete button for this goal -->
+        <form method="post" style="display:inline; margin-left:10px;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="delete">
+          <input type="hidden" name="goal_id" value="{{ goal.id }}">
+          <button type="submit" style="background:#dc3545; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer;">
+            Delete
+          </button>
+        </form>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>No goals yet.</p>
+  {% endif %}
+</div>
+
+<hr>
+
+<form method="post">
+  {% csrf_token %}
+  <label for="id_name"><strong>New Goal Name</strong></label>
+  <input type="text" id="id_name" name="name" placeholder="e.g. Save for vacation" style="width:100%; max-width:300px;">
+
+  <label for="id_target_amount" style="margin-top:10px; display:block;"><strong>Target Amount</strong></label>
+  <input type="text" id="id_target_amount" name="target_amount" placeholder="e.g. 2000.00" style="width:100%; max-width:200px;">
+
+  <button type="submit" style="margin-top:10px;">Add Goal</button>
+</form>
+
+{% endblock %}
+

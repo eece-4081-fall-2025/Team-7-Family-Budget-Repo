@@ -54,4 +54,18 @@ def build_members_list(group):
     profiles = Profile.objects.filter(group=group).select_related("user").order_by(
         "user__username"
     )
-    return [member_dto(p, group) for p in profiles]
+    members = [member_dto(p, group) for p in profiles]
+
+    # Enrich with admin info and adjust role label if needed
+    for p, m in zip(profiles, members):
+        # expose is_admin for templates
+        m["is_admin"] = getattr(p, "is_admin", False)
+        # if the dto called them "Member" but they are admin, relabel
+        try:
+            if m.get("role") == "Member" and p.is_admin:
+                m["role"] = "Admin"
+        except Exception:
+            # if role isn't there for some reason, just skip
+            pass
+
+    return members

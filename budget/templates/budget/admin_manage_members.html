@@ -1,5 +1,6 @@
 {% extends "budget/base.html" %}
 {% block title %}Manage Family Members{% endblock %}
+
 {% block content %}
 <h1>Manage Family Members</h1>
 
@@ -19,20 +20,40 @@
   <table>
     <tr>
       <th>Name</th>
+      <th>Role</th>
       <th>Income</th>
       <th>Expenses</th>
-      <th></th>
+      <th>Actions</th>
     </tr>
     {% for member in members %}
       <tr>
         <td>{{ member.display_name }}</td>
+        <td>{{ member.role }}</td>
         <td>{{ member.income }}</td>
         <td>{{ member.expenses }}</td>
         <td>
           {% if member.is_owner %}
             Owner
           {% else %}
-            <form method="post" style="display:inline">
+            {# Promote / demote buttons based on role #}
+            {% if member.role == "Member" %}
+              <form method="post" style="display:inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="promote">
+                <input type="hidden" name="member_profile_id" value="{{ member.profile_id }}">
+                <button type="submit">Make Admin</button>
+              </form>
+            {% elif member.role == "Admin" %}
+              <form method="post" style="display:inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="demote">
+                <input type="hidden" name="member_profile_id" value="{{ member.profile_id }}">
+                <button type="submit">Make Member</button>
+              </form>
+            {% endif %}
+
+            {# Remove member button #}
+            <form method="post" style="display:inline; margin-left: 4px;">
               {% csrf_token %}
               <input type="hidden" name="action" value="remove">
               <input type="hidden" name="member_profile_id" value="{{ member.profile_id }}">

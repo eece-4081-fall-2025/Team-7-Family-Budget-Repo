@@ -2,8 +2,14 @@
 {% block title %}Dashboard{% endblock %}
 {% block content %}
 <h1>Dashboard</h1>
-<p><a href="{% url 'profile_edit' %}">Edit Profile</a></p>
-<p><a href="{% url 'group_create' %}">Create Family Group</a></p>
-<p><a href="{% url 'group_join' %}">Join Family Group</a></p>
-<p><a href="{% url 'group_members' %}">View Family Members</a></p>
+
+<p>Welcome, {{ request.user.profile.nickname|default:request.user.username }}</p>
+
+<ul>
+  <li><a href="{% url 'profile_edit' %}">Edit Profile</a></li>
+  <li><a href="{% url 'group_create' %}">Create Family Group</a></li>
+  <li><a href="{% url 'group_join' %}">Join Family Group</a></li>
+  <li><a href="{% url 'group_members' %}">View Family Members</a></li>
+  <li><a href="{% url 'group_manage_members' %}">Manage Family Members</a></li>
+</ul>
 {% endblock %}

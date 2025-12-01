@@ -1,47 +1,57 @@
-from typing import Iterable, Dict, Any
+from decimal import Decimal
 from django.contrib.auth import get_user_model
 from .models import Profile, FamilyGroup
 
 User = get_user_model()
 
 
-def get_profile(user: User) -> Profile:
+def get_profile(user):
     profile, _ = Profile.objects.get_or_create(user=user)
     return profile
 
 
-def can_join_or_create_group(profile: Profile) -> bool:
-    return profile.group_id is None
+def can_join_or_create_group(profile):
+    return profile.group is None
 
 
-def attach_profile_to_group(profile: Profile, group: FamilyGroup) -> Profile:
+def attach_profile_to_group(profile, group):
     profile.group = group
-    profile.save()
-    return profile
+    profile.save(update_fields=["group"])
 
 
-def detach_profile_from_group(profile: Profile) -> Profile:
+def remove_profile_from_group(profile):
     profile.group = None
-    profile.save()
+    profile.save(update_fields=["group"])
+
+
+def add_user_to_group_by_username(username, group):
+    try:
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        return None
+    profile = get_profile(user)
+    if can_join_or_create_group(profile):
+        attach_profile_to_group(profile, group)
     return profile
 
 
-def iter_group_members(group: FamilyGroup) -> Iterable[User]:
-    return group.members_qs()
-
-
-def member_dto(user: User, group: FamilyGroup) -> Dict[str, Any]:
-    profile = getattr(user, "profile", None)
-    income = getattr(profile, "income", 0) if profile else 0
-    expenses = getattr(profile, "expenses", 0) if profile else 0
+def member_dto(profile, group):
+    user = profile.user
+    income = profile.income if profile.income is not None else Decimal("0")
+    expenses = profile.expenses if profile.expenses is not None else Decimal("0")
+    display_name = profile.nickname or user.username
     return {
+        "profile_id": profile.pk,
         "username": user.username,
+        "display_name": display_name,
         "role": group.role_of(user),
         "income": income,
         "expenses": expenses,
     }
 
 
-def build_members_list(group: FamilyGroup) -> Iterable[Dict[str, Any]]:
-    users = iter_group_members(group)
-    return [member_dto(u, group) for u in users]
+def build_members_list(group):
+    profiles = Profile.objects.filter(group=group).select_related("user").order_by(
+        "user__username"
+    )
+    return [member_dto(p, group) for p in profiles]

@@ -1,70 +1,38 @@
 {% extends "budget/base.html" %}
-
 {% block title %}Family Members{% endblock %}
 
 {% block content %}
-<div class="card">
-  <h2>Family Group</h2>
-
-  {% if group %}
-    <p><strong>Group name:</strong> {{ group.name }}</p>
-    <p><strong>Invite code:</strong> {{ group.code }}</p>
-
-    {% if is_owner %}
-      <p><strong>Your role:</strong> Owner (Admin)</p>
-      <p>
-        <a href="{% url 'group_manage_members' %}" class="btn">
-          Manage family members
-        </a>
-      </p>
-    {% else %}
-      <p><strong>Your role:</strong> Member</p>
-    {% endif %}
-  {% else %}
-    <p>You are not currently in a family group.</p>
-    <p>
-      <a href="{% url 'group_create' %}">Create a family group</a> or
-      <a href="{% url 'group_join' %}">join with a code</a>.
-    </p>
-  {% endif %}
-</div>
+<h1>Family Members</h1>
 
 {% if group %}
-  <h3>Members</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>Name / Nickname</th>
-        <th>Username</th>
-        <th>Role</th>
-        <th>Income</th>
-        <th>Expenses</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for member in members %}
-        <tr>
-          <td>{{ member.display_name }}</td>
-          <td>{{ member.username }}</td>
-          <td>{{ member.role }}</td>
-          <td>{{ member.income }}</td>
-          <td>{{ member.expenses }}</td>
-        </tr>
+  <p>Family group: <strong>{{ group.name }}</strong></p>
+
+  <h2>Members</h2>
+  <ul>
+    {% for m in members %}
+      <li>
+        {{ m.display_name }} ({{ m.role }})
+        – Income: {{ m.income }} | Expenses: {{ m.expenses }}
+      </li>
+    {% empty %}
+      <li>No members found.</li>
+    {% endfor %}
+  </ul>
+
+  <h2>Spending Categories</h2>
+  {% if categories %}
+    <ul>
+      {% for cat in categories %}
+        <li>{{ cat.name }}</li>
       {% empty %}
-        <tr>
-          <td colspan="5">No members in this group yet.</td>
-        </tr>
+        <li>No categories have been created yet.</li>
       {% endfor %}
-    </tbody>
-  </table>
+    </ul>
+  {% else %}
+    <p>No categories have been created yet.</p>
+  {% endif %}
 
-  <form method="post" action="{% url 'group_leave' %}" style="margin-top: 20px;">
-    {% csrf_token %}
-    <button type="submit">Leave family group</button>
-  </form>
+{% else %}
+  <p>You are not currently in a family group.</p>
 {% endif %}
-
-<p style="margin-top: 20px;">
-  <a href="{% url 'budget_dashboard' %}">Back to Dashboard</a>
-</p>
 {% endblock %}

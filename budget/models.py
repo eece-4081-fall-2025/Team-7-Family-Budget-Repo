@@ -24,3 +24,19 @@ class Profile(models.Model):
 
     def __str__(self):
         return self.nickname or self.user.username
+
+class Category(models.Model):
+
+    group = models.ForeignKey(
+        FamilyGroup,
+        related_name="categories",
+        on_delete=models.CASCADE,
+    )
+    name = models.CharField(max_length=100)
+
+    class Meta:
+        unique_together = ("group", "name")
+        ordering = ["name"]
+
+    def __str__(self):
+        return f"{self.name} ({self.group.name})"

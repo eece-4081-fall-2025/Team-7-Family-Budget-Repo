@@ -1,0 +1,40 @@
+{% extends "budget/base.html" %}
+{% block title %}Spending Categories{% endblock %}
+
+{% block content %}
+<h1>Spending Categories</h1>
+
+{% if group %}
+  <p>Managing categories for: <strong>{{ group.name }}</strong></p>
+
+  <h2>Existing Categories</h2>
+  <div class="category-list">
+    {% if categories %}
+      {% for cat in categories %}
+        <div class="category-item" style="padding: 6px 0; border-bottom: 1px solid #eee;">
+          {{ cat.name }}
+          <form method="post" style="display:inline; margin-left: 10px;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="category_id" value="{{ cat.id }}">
+            <button type="submit">Delete</button>
+          </form>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p>No categories yet.</p>
+    {% endif %}
+  </div>
+
+  <h2>Add New Category</h2>
+  <form method="post" style="margin-top: 20px;">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="add">
+    <label for="id_name"><strong>Add New Category</strong></label>
+    <input type="text" id="id_name" name="name" placeholder="e.g. Groceries" required>
+    <button type="submit">Add Category</button>
+  </form>
+{% else %}
+  <p>You are not currently in a family group, so you cannot manage categories.</p>
+{% endif %}
+{% endblock %}

@@ -14,6 +14,7 @@ from .views import (
     ConfirmLogoutView,
     AdminManageMembersView,
     AdminRemoveMemberView,
+    CategoryManageView,
 )
 
 urlpatterns = [
@@ -50,6 +51,12 @@ urlpatterns = [
         "accounts/logout/confirm/",
         ConfirmLogoutView.as_view(),
         name="budget_logout_confirm",
+    ),
+    
+    path(
+        "categories/manage/",
+        CategoryManageView.as_view(),
+        name="category_manage",
     ),
 ]
 

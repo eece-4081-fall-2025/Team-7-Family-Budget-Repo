@@ -10,7 +10,7 @@ from django.views.generic import TemplateView, CreateView, UpdateView, FormView
 
 from .forms import ProfileForm
 from .forms_group import GroupJoinForm
-from .models import Profile, FamilyGroup
+from .models import Profile, FamilyGroup, Category
 from . import services
 
 User = get_user_model()
@@ -104,17 +104,21 @@ class GroupMembersView(LoginRequiredMixin, TemplateView):
         ctx = super().get_context_data(**kwargs)
         profile = services.get_profile(self.request.user)
         group = profile.group
-        ctx["group"] = group
-        ctx["is_owner"] = bool(group and group.owner == self.request.user)
 
         if group is not None:
             # Returns dicts: profile_id, username, display_name, role, income, expenses
             members = services.build_members_list(group)
+            # grab all spending categories for this group
+            categories = Category.objects.filter(group=group).order_by("name")
         else:
             members = []
+            categories = []
 
+        ctx["group"] = group
         ctx["members"] = members
+        ctx["categories"] = categories
         return ctx
+
 
 
 class GroupLeaveView(LoginRequiredMixin, View):
@@ -251,3 +255,40 @@ class AdminRemoveMemberView(LoginRequiredMixin, View):
             member_profile.save()
 
         return redirect("group_manage_members")
+    
+class CategoryManageView(LoginRequiredMixin, TemplateView):
+    template_name = "budget/category_manage.html"
+
+    def get(self, request, *args, **kwargs):
+        profile = services.get_profile(request.user)
+        group = profile.group
+
+        # Only the group owner can manage categories
+        if not group or group.owner != request.user:
+            return redirect("group_members")
+
+        categories = Category.objects.filter(group=group).order_by("name")
+        context = self.get_context_data(group=group, categories=categories)
+        return self.render_to_response(context)
+
+    def post(self, request, *args, **kwargs):
+        profile = services.get_profile(request.user)
+        group = profile.group
+
+        # Only the group owner can manage categories
+        if not group or group.owner != request.user:
+            return redirect("group_members")
+
+        action = request.POST.get("action") or "add"
+
+        if action == "add":
+            name = request.POST.get("name", "").strip()
+            if name:
+                Category.objects.get_or_create(group=group, name=name)
+
+        elif action == "delete":
+            cat_id = request.POST.get("category_id")
+            if cat_id:
+                Category.objects.filter(id=cat_id, group=group).delete()
+
+        return redirect("category_manage")
